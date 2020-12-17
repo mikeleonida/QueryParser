@@ -40,28 +40,21 @@ public class QueryParameter {
 	}
 
 	public List<Restriction> getRestrictions() {
+		List<Restriction> lr = new ArrayList<Restriction>();
 		String[] conditionWords = query.trim().replaceAll("\\s+", " ").split(" where ");
-		if (!(conditionWords.length>1)) {
-			return null;
+		if (conditionWords.length<2) {
+			return lr;
 		}
 		String conditionClause = conditionWords[1].split(" order by ")[0].split(" group by ")[0];
 		return getRestrictionClauses(conditionClause);
 	}
 
 	public List<String> getLogicalOperators() {
-		List<String> ls = new ArrayList<String>();
-		String[] queryWords = query.trim().replaceAll("\\s+", " ").split(" ");
-		for (String s : queryWords) {
-			if (s.compareToIgnoreCase("and") == 0 || (s.compareToIgnoreCase("or") == 0) 
-					|| (s.compareToIgnoreCase("not") == 0)) {
-				ls.add(s);
-			}
-		}
-		return ls;
+		return parseLogicalOps(query);
 	}
 
 	public List<String> getFields() {
-		return getListFromArr(getBaseQuery().replace("\\s*(Select|select)\\s+", "").split(" from ")[0]
+		return getListFromArr(getBaseQuery().replaceAll("^\\s*(S|s)elect\\s+", "").split(" from ")[0]
 				.replaceAll("\\s*,\\s*"," ").split(" "));
 	}
 
@@ -72,9 +65,12 @@ public class QueryParameter {
 		for (String f : fields) {
 			f = f.replaceAll("\\s+", "");
 			if (f.contains( "(") && f.contains( ")" ) && ( f.indexOf('(') < f.indexOf(')') ) ) {
-				AggregateFunction af = new AggregateFunction(f.substring(f.indexOf('(')+1, f.indexOf(')')),
-															f.substring(0, f.indexOf('(')) );
-				laf.add(af);									
+				String fn = f.substring(0, f.indexOf('('));
+				if (fn.equalsIgnoreCase("min") || fn.equalsIgnoreCase("max") || fn.equalsIgnoreCase("avg")
+						|| fn.equalsIgnoreCase("count") || fn.equalsIgnoreCase("sum")) {
+					AggregateFunction af = new AggregateFunction(f.substring(f.indexOf('(')+1, f.indexOf(')')), fn);
+					laf.add(af);
+				}
 			}
 		}
 		return laf;
@@ -106,11 +102,14 @@ public class QueryParameter {
 	
 	private List<Restriction> getRestrictionClauses(String conditionClause) {
 		List<Restriction> lr = new ArrayList<Restriction>();
-		List<String> logicalOps = getLogicalOperators(); //assumes logical ops only in where clause
+		List<String> logicalOps = parseLogicalOps(conditionClause); 
 
 		String newConditionClause = new String(conditionClause);
 		for (int i=0; i<=logicalOps.size(); i++) {
-			String op = logicalOps.get(i);
+			String op = " ";
+			if (i!=logicalOps.size()) {
+				op = logicalOps.get(i);
+			}
 			String[] words = newConditionClause.split(" " + op + " ");
 			
 			String currentCondition = words[0].trim().replaceAll("\\s+", "");
@@ -119,14 +118,21 @@ public class QueryParameter {
 			if (words.length<2) {
 				break;
 			}
-			newConditionClause = newConditionClause.substring(newConditionClause.indexOf(" " + op + " "));
+			newConditionClause = newConditionClause.substring(newConditionClause.indexOf(" " + op + " ") +
+					op.length()+2);
 		}
 		
 		return lr;
 	}
 	
 	private Restriction parseRestriction(String s) {
-		if (s.contains("<")) {
+		if (s.contains("<=")) {
+			return new Restriction(s.substring(0, s.indexOf("<=")), s.substring(s.indexOf("<=")+2), "<=");
+		} else if (s.contains(">=")) {
+			return new Restriction(s.substring(0, s.indexOf(">=")), s.substring(s.indexOf(">=")+2), ">=");
+		} else if (s.contains("!=")) {
+			return new Restriction(s.substring(0, s.indexOf("!=")), s.substring(s.indexOf("!=")+2), "!=");
+		} else if (s.contains("<")) {
 			return new Restriction(s.substring(0, s.indexOf("<")), s.substring(s.indexOf("<")+1), "<");
 		} else if (s.contains(">")) {
 			return new Restriction(s.substring(0, s.indexOf(">")), s.substring(s.indexOf(">")+1), ">");
@@ -136,5 +142,20 @@ public class QueryParameter {
 		
 		return new Restriction();
 	}
+	
+	private List<String> parseLogicalOps(String q) {
+		List<String> ls = new ArrayList<String>();
+	
+		String[] queryWords = q.trim().replaceAll("\\s+", " ").split(" ");
+		for (String s : queryWords) {
+			if (s.compareToIgnoreCase("and") == 0 || (s.compareToIgnoreCase("or") == 0) 
+				|| (s.compareToIgnoreCase("not") == 0)) {
+				ls.add(s);
+			}
+		}
+		return ls;	
+	}
+	
+	
 	
 }

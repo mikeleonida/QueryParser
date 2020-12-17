@@ -24,13 +24,14 @@ package com.stackroute.datamunger.query.parser;
 public class QueryParser {
 
 	private QueryParameter queryParameter = new QueryParameter();
-
+	
 	/*
 	 * This method will parse the queryString and will return the object of
 	 * QueryParameter class
 	 */
 	public QueryParameter parseQuery(String queryString) {
 		queryParameter.setQuery(queryString);
+		
 		return queryParameter;
 	}
 
