@@ -40,7 +40,7 @@ public class AggregateFunction {
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		return "Aggregate Function: [field = " + field + ", function = " + function + "]";
+		return "\nAggregate Function: [field = " + field + ", function = " + function + "]";
 	}
 	
 	

@@ -51,6 +51,6 @@ public class Restriction {
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		return "Restriction: [name = " + name + ", value = " + value + ", condition is " + condition + "]";
+		return "\nRestriction: [name = " + name + ", value = " + value + ", condition is " + condition + "]";
 	}
 }

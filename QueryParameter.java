@@ -148,9 +148,8 @@ public class QueryParameter {
 	
 		String[] queryWords = q.trim().replaceAll("\\s+", " ").split(" ");
 		for (String s : queryWords) {
-			if (s.compareToIgnoreCase("and") == 0 || (s.compareToIgnoreCase("or") == 0) 
-				|| (s.compareToIgnoreCase("not") == 0)) {
-				ls.add(s);
+			if (s.compareToIgnoreCase("and") == 0 || (s.compareToIgnoreCase("or") == 0) ) {
+				ls.add(s.toLowerCase());
 			}
 		}
 		return ls;	
